@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeinDienstplan</title>
+    <style>
+        /* Einige grundlegende Stile, um das Aussehen zu verbessern. Sie können sie nach Bedarf anpassen. */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
+        }
+        .separator {
+            border-bottom: 2px solid black;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Schritt 1 -->
+        <h2>Schritt 1:</h2>
+        <form action="/upload" method="post" enctype="multipart/form-data" id="uploadForm">
+            <label for="fileInput"
+                style="cursor:pointer; display:inline-block; padding: 10px 15px; background-color: #007BFF; color: white; border-radius: 4px; text-align: center;">
+                Dienstplan auswählen
+                <input type="file" name="file" id="fileInput" accept=".xls,.xlsx" style="display:none;"
+                    onchange="submitForm();">
+            </label>
+        </form>
+        <div class="separator"></div>
+
+        <!-- Schritt 2: Mitarbeiter:in auswählen: -->
+        <h2>Schritt 2: Mitarbeiter:in auswählen:</h2>
+        <p id="outputLabel"></p>
+        <select id="employeeList" size="5" style="width:100%; height:150px;">
+            {% for employee in employees %}
+            <option value="{{ employee }}">{{ employee }}</option>
+            {% endfor %}
+        </select>
+        <!-- Hidden field to store the UID -->
+        <input type="hidden" id="uid" value="">
+        
+        <!-- Textarea to display the schedule -->
+        <textarea id="scheduleOutput" rows="10" cols="50" readonly style="width:100%; margin-top: 20px;"></textarea>
+        
+        <div class="separator"></div>
+
+<!-- Schritt 3 -->
+<h2>Schritt 3:</h2>
+<!-- Button zum Erstellen eines PDFs im Stil von Schritt 1 -->
+<button id="pdfButton" 
+        style="cursor:pointer; padding: 10px 15px; background-color: #007BFF; color: white; border-radius: 4px; text-align: center;">
+    PDF erstellen
+</button>
+<span style="padding: 0 10px;">und/oder</span>
+<button id="icsButton" style="padding: 10px 15px; background-color: #007BFF; color: white; border-radius: 4px; text-align: center;">
+    ICS-Erstellen
+</button>
+<div class="separator"></div>
+
+        <!-- Kontaktinformation -->
+        <p style="font-size: 8pt;">DeinDienstplan - Kontakt:</p>
+        <p style="font-size: 8pt;">Nico Kluge, Tel: 82-8637, mail: n.kluge@asklepios.com</p>
+    </div>
+
+<script>
+    function submitForm() {
+        var formData = new FormData(document.getElementById('uploadForm'));
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Store the UID in the hidden field
+            document.getElementById("uid").value = data.uid;
+
+            // Populate the employeeList dropdown with the employees
+            var employeeList = document.getElementById("employeeList");
+            employeeList.innerHTML = '';
+            data.employees.forEach(function(employee) {
+                var option = document.createElement("option");
+                option.text = employee;
+                option.value = employee;
+                employeeList.appendChild(option);
+            });
+        });
+    }
+
+    document.getElementById("employeeList").addEventListener("change", function() {
+        var selectedEmployee = this.value;
+        var uid = document.getElementById("uid").value;
+        fetch('/handle_employee_selection', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                employee: selectedEmployee,
+                uid: uid
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Display the schedule in the textarea
+            document.getElementById("scheduleOutput").value = data.schedule;
+            console.log(data);
+        });
+    });
+    
+// Für den PDF-Button:
+document.getElementById("pdfButton").addEventListener("click", function() {
+    var scheduleText = document.getElementById("scheduleOutput").value;
+
+    // Überprüfen, ob der Text leer ist
+    if (!scheduleText.trim()) {
+        alert("Sie haben keinen Dienstplan einer Mitarbeiter:In ausgewählt.");
+        return;
+    }
+
+    // Wenn der Text nicht leer ist, wird der folgende Code ausgeführt:
+    fetch('/generate_pdf', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            schedule_text: scheduleText
+        })
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        // Download des PDFs in einem neuen Tab
+        var link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.target = "_blank";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+});
+
+// Für den ICS-Button:
+document.getElementById("icsButton").addEventListener("click", function() {
+    var scheduleText = document.getElementById("scheduleOutput").value;
+
+    // Überprüfen, ob der Text leer ist
+    if (!scheduleText.trim()) {
+        alert("Sie haben keinen Dienstplan einer Mitarbeiter:In ausgewählt.");
+        return;
+    }
+
+    // Wenn der Text nicht leer ist, wird der folgende Code ausgeführt:
+    fetch('/generate_ics', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            schedule_text: scheduleText
+        })
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        // Download der ICS-Datei
+        var link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "Dienstplan.ics";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+});
+
+
+
+</script>
+
+</body>
+
+</html>
