@@ -162,8 +162,14 @@ class ExcelProcessor:
 
     def show_schedule(self, selected_employee):
 
-        # Setze die Lokalisierung auf Deutsch
-        locale.setlocale(locale.LC_TIME, 'de_DE.UTF-8')
+        # Set the localization to German, if available
+        def set_locale(category, loc):
+            try:
+                locale.setlocale(category, loc)
+            except locale.Error:
+                print(f"Locale {loc} not supported. Using default locale.")
+
+        set_locale(locale.LC_TIME, 'de_DE.UTF-8')
 
         # Get the covered days from the workbook
         covered_days = get_covered_days(self.workbook, self.relevant_sheets)
