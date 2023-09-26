@@ -421,8 +421,9 @@ def generate_pdf():
             pdf.set_fill_color(255, 255, 255)
         pdf.multi_cell(0, 5, line, fill=True)
 
-    creation_date = datetime.datetime.now().strftime('%d.%m.%Y')   # Hier wurde die Änderung vorgenommen
-    creation_time = datetime.datetime.now().strftime('%H:%M')      # Hier wurde die Änderung vorgenommen
+    adjusted_time = datetime.datetime.now() + datetime.timedelta(hours=2)  # Addiere 2 Stunden
+    creation_date = adjusted_time.strftime('%d.%m.%Y')
+    creation_time = adjusted_time.strftime('%H:%M')
     pdf.multi_cell(0, 10, f"Erstellt am {creation_date} um {creation_time} Uhr", align='L')
 
     # Statt es auf die Festplatte zu speichern, speichern wir es in den Speicher.
@@ -434,7 +435,6 @@ def generate_pdf():
     # Antwort mit PDF-Inhalt
     response = Response(pdf_content, content_type='application/pdf')
     return response
-
 
 @app.route('/generate_ics', methods=['POST'])
 def generate_ics():
