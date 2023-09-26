@@ -14,9 +14,39 @@
             border: 1px solid #e0e0e0;
             box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
         }
+
         .separator {
             border-bottom: 2px solid black;
             margin: 10px 0;
+        }
+
+        /* Ladeindikator Stile */
+        .loader-container {
+            display: none; /* Standardmäßig verbergen */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 1000; /* Damit es über anderen Elementen angezeigt wird */
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -45,142 +75,186 @@
         </select>
         <!-- Hidden field to store the UID -->
         <input type="hidden" id="uid" value="">
-        
+
         <!-- Textarea to display the schedule -->
         <textarea id="scheduleOutput" rows="10" cols="50" readonly style="width:100%; margin-top: 20px;"></textarea>
-        
+
         <div class="separator"></div>
 
-<!-- Schritt 3 -->
-<h2>Schritt 3:</h2>
-<!-- Button zum Erstellen eines PDFs im Stil von Schritt 1 -->
-<button id="pdfButton" 
-        style="cursor:pointer; padding: 10px 15px; background-color: #007BFF; color: white; border-radius: 4px; text-align: center;">
-    PDF erstellen
-</button>
-<span style="padding: 0 10px;">und/oder</span>
-<button id="icsButton" style="padding: 10px 15px; background-color: #007BFF; color: white; border-radius: 4px; text-align: center;">
-    ICS-Erstellen
-</button>
-<div class="separator"></div>
+        <!-- Schritt 3 -->
+        <h2>Schritt 3:</h2>
+        <!-- Button zum Erstellen eines PDFs im Stil von Schritt 1 -->
+        <button id="pdfButton"
+            style="cursor:pointer; padding: 10px 15px; background-color: #007BFF; color: white; border-radius: 4px; text-align: center;">
+            PDF erstellen
+        </button>
+        <span style="padding: 0 10px;">und/oder</span>
+        <button id="icsButton" style="padding: 10px 15px; background-color: #007BFF; color: white; border-radius: 4px; text-align: center;">
+            ICS-Erstellen
+        </button>
+        <div class="separator"></div>
 
         <!-- Kontaktinformation -->
         <p style="font-size: 8pt;">DeinDienstplan - Kontakt:</p>
         <p style="font-size: 8pt;">Nico Kluge, Tel: 82-8637, mail: n.kluge@asklepios.com</p>
     </div>
 
-<script>
-    function submitForm() {
-        var formData = new FormData(document.getElementById('uploadForm'));
-        fetch('/upload', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Store the UID in the hidden field
-            document.getElementById("uid").value = data.uid;
+    <!-- Ladeindikator -->
+    <div class="loader-container" id="loaderContainer">
+        <div class="loader"></div>
+        Laden...
+    </div>
 
-            // Populate the employeeList dropdown with the employees
-            var employeeList = document.getElementById("employeeList");
-            employeeList.innerHTML = '';
-            data.employees.forEach(function(employee) {
-                var option = document.createElement("option");
-                option.text = employee;
-                option.value = employee;
-                employeeList.appendChild(option);
+    <script>
+        function submitForm() {
+            // Ladeindikator anzeigen
+            document.getElementById("loaderContainer").style.display = "flex";
+
+            var formData = new FormData(document.getElementById('uploadForm'));
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Ladeindikator verbergen
+                document.getElementById("loaderContainer").style.display = "none";
+
+                // Store the UID in the hidden field
+                document.getElementById("uid").value = data.uid;
+
+                // Populate the employeeList dropdown with the employees
+                var employeeList = document.getElementById("employeeList");
+                employeeList.innerHTML = '';
+                data.employees.forEach(function(employee) {
+                    var option = document.createElement("option");
+                    option.text = employee;
+                    option.value = employee;
+                    employeeList.appendChild(option);
+                });
+            })
+            .catch(() => {
+                // Ladeindikator verbergen, auch bei einem Fehler
+                document.getElementById("loaderContainer").style.display = "none";
+            });
+        }
+
+        document.getElementById("employeeList").addEventListener("change", function() {
+            // Ladeindikator anzeigen
+            document.getElementById("loaderContainer").style.display = "flex";
+
+            var selectedEmployee = this.value;
+            var uid = document.getElementById("uid").value;
+            fetch('/handle_employee_selection', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    employee: selectedEmployee,
+                    uid: uid
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Ladeindikator verbergen
+                document.getElementById("loaderContainer").style.display = "none";
+
+                // Display the schedule in the textarea
+                document.getElementById("scheduleOutput").value = data.schedule;
+                console.log(data);
+            })
+            .catch(() => {
+                // Ladeindikator verbergen, auch bei einem Fehler
+                document.getElementById("loaderContainer").style.display = "none";
             });
         });
-    }
 
-    document.getElementById("employeeList").addEventListener("change", function() {
-        var selectedEmployee = this.value;
-        var uid = document.getElementById("uid").value;
-        fetch('/handle_employee_selection', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                employee: selectedEmployee,
-                uid: uid
+        // Für den PDF-Button:
+        document.getElementById("pdfButton").addEventListener("click", function() {
+            var scheduleText = document.getElementById("scheduleOutput").value;
+
+            // Überprüfen, ob der Text leer ist
+            if (!scheduleText.trim()) {
+                alert("Sie haben keinen Dienstplan einer Mitarbeiter:In ausgewählt.");
+                return;
+            }
+
+            // Ladeindikator anzeigen
+            document.getElementById("loaderContainer").style.display = "flex";
+
+            // Wenn der Text nicht leer ist, wird der folgende Code ausgeführt:
+            fetch('/generate_pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    schedule_text: scheduleText
+                })
             })
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Display the schedule in the textarea
-            document.getElementById("scheduleOutput").value = data.schedule;
-            console.log(data);
+            .then(response => response.blob())
+            .then(blob => {
+                // Ladeindikator verbergen
+                document.getElementById("loaderContainer").style.display = "none";
+
+                // Download des PDFs in einem neuen Tab
+                var link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.target = "_blank";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            })
+            .catch(() => {
+                // Ladeindikator verbergen, auch bei einem Fehler
+                document.getElementById("loaderContainer").style.display = "none";
+            });
         });
-    });
-    
-// Für den PDF-Button:
-document.getElementById("pdfButton").addEventListener("click", function() {
-    var scheduleText = document.getElementById("scheduleOutput").value;
 
-    // Überprüfen, ob der Text leer ist
-    if (!scheduleText.trim()) {
-        alert("Sie haben keinen Dienstplan einer Mitarbeiter:In ausgewählt.");
-        return;
-    }
+        // Für den ICS-Button:
+        document.getElementById("icsButton").addEventListener("click", function() {
+            var scheduleText = document.getElementById("scheduleOutput").value;
 
-    // Wenn der Text nicht leer ist, wird der folgende Code ausgeführt:
-    fetch('/generate_pdf', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            schedule_text: scheduleText
-        })
-    })
-    .then(response => response.blob())
-    .then(blob => {
-        // Download des PDFs in einem neuen Tab
-        var link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.target = "_blank";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    });
-});
+            // Überprüfen, ob der Text leer ist
+            if (!scheduleText.trim()) {
+                alert("Sie haben keinen Dienstplan einer Mitarbeiter:In ausgewählt.");
+                return;
+            }
 
-// Für den ICS-Button:
-document.getElementById("icsButton").addEventListener("click", function() {
-    var scheduleText = document.getElementById("scheduleOutput").value;
+            // Ladeindikator anzeigen
+            document.getElementById("loaderContainer").style.display = "flex";
 
-    // Überprüfen, ob der Text leer ist
-    if (!scheduleText.trim()) {
-        alert("Sie haben keinen Dienstplan einer Mitarbeiter:In ausgewählt.");
-        return;
-    }
+            // Wenn der Text nicht leer ist, wird der folgende Code ausgeführt:
+            fetch('/generate_ics', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    schedule_text: scheduleText
+                })
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                // Ladeindikator verbergen
+                document.getElementById("loaderContainer").style.display = "none";
 
-    // Wenn der Text nicht leer ist, wird der folgende Code ausgeführt:
-    fetch('/generate_ics', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            schedule_text: scheduleText
-        })
-    })
-    .then(response => response.blob())
-    .then(blob => {
-        // Download der ICS-Datei
-        var link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "Dienstplan.ics";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    });
-});
+                // Download der ICS-Datei
+                var link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "Dienstplan.ics";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            })
+            .catch(() => {
+                // Ladeindikator verbergen, auch bei einem Fehler
+                document.getElementById("loaderContainer").style.display = "none";
+            });
+        });
 
-
-
-</script>
+    </script>
 
 </body>
 
