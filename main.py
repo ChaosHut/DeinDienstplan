@@ -482,13 +482,6 @@ def log_action(schedule_first_line, filetype):
     response = requests.post(webhook_url, json=data) # Verwenden Sie json=data, um es als JSON zu senden
     return response
 
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
-
-
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
