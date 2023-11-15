@@ -499,5 +499,5 @@ def log_action(schedule_first_line, filetype):
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
-    app.run(host='127.0.0.1', port=5000, debug=False)
+    app.run(host='0.0.0.0', debug=False)
 
