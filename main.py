@@ -178,6 +178,10 @@ class ExcelProcessor:
         tenth_day = datetime.datetime.strptime(covered_days[9].split()[0], '%d.%m.%Y')
         month_year = tenth_day.strftime('%B %Y')
 
+        # Extract month and year for comparison later
+        month = tenth_day.month
+        year = tenth_day.year
+
         # Initialize a dictionary to store the schedule of the selected employee
         employee_schedule = {}
 
@@ -191,8 +195,8 @@ class ExcelProcessor:
                 # Get the date from the second row of the sheet
                 date = sheet.cell(row=2, column=col).value
 
-                # If the date is covered, get the service of the selected employee and add it to the employee_schedule dictionary
-                if date and date.strftime('%d.%m.%Y %A') in covered_days:
+                # If the date is covered and belongs to the month and year, get the service of the selected employee and add it to the employee_schedule dictionary
+                if date and date.strftime('%d.%m.%Y %A') in covered_days and date.month == month and date.year == year:
                     service = self.get_service(sheet, selected_employee, col)
                     if date in self.feiertage:
                         service += ' (Feiertag)'
@@ -241,7 +245,7 @@ class ExcelProcessor:
             18: 'FD-EGR',
             19: 'FD-BronchoHKL',
             20: 'FD-Geb',
-            # The service for row 21 will be set later based on the date condition
+            21: 'SD930',  # Direkte Zuweisung von 'SD930' zu Zeile 21
             22: 'SD11',
             23: 'SD13',
             24: 'POBE',
@@ -269,6 +273,15 @@ class ExcelProcessor:
         for row in range(43, 74):
             services[row] = 'Frei'
 
+        # Spezielle Logik für Zeile 73
+        def check_special_case(cell_value, current_date):
+            if "unterr" in cell_value.lower():
+                if current_date.weekday() == 0:  # Montag
+                    return "SAN-Unterricht"
+                elif current_date.weekday() == 2:  # Mittwoch
+                    return "PJ-Unterricht"
+            return "Frei"
+
         # Get the date from the current column and determine the service for row 12
         current_date = sheet.cell(row=2, column=col).value
 
@@ -278,24 +291,19 @@ class ExcelProcessor:
         else:
             services[12] = 'FD-lang'
 
-        if current_date and current_date.month <= 9:
-            services[21] = 'SD11'
-        else:
-            services[21] = 'SD930'
-
         # Initialize a list to store the services of the employee
         employee_services = []
 
         # Iterate over the rows of the sheet
         for row in range(3, 74):
-            # Get the cell value
             cell_value = sheet.cell(row=row, column=col).value
-
-            # If the cell value contains the employee name, append the service to the employee_services list
             if cell_value:
                 for value in cell_value.split('/'):
                     if employee in value:
-                        service = services[row]
+                        if row == 73:
+                            service = check_special_case(cell_value, current_date)
+                        else:
+                            service = services[row]
                         if row in [40, 41] and '/' in cell_value:
                             if cell_value.index(employee) == 0:
                                 service += '/Tag'
@@ -491,4 +499,5 @@ def log_action(schedule_first_line, filetype):
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
-    app.run(host='0.0.0.0', debug=False)
+    app.run(host='127.0.0.1', port=5000, debug=False)
+
