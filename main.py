@@ -117,9 +117,14 @@ class ExcelProcessor:
             for row in sheet.iter_rows(min_row=3, max_row=66, min_col=4, max_col=10):
                 for cell in row:
                     if cell.value and isinstance(cell.value, str) and re.match(r'^=.*$', cell.value):
+                        # Prüfung auf ungültige Referenz (#REF!)
+                        if '#REF!' in cell.value:
+                            print(f"Ungültige Referenz gefunden in Zelle {cell.coordinate} im Blatt '{sheet_name}'")
+                            continue  # Überspringen der aktuellen Zelle
+
                         reference = cell.value[1:]
                         if '!' in reference:
-                            reference_sheet_name, reference_cell = reference.split('!')
+                            reference_sheet_name, reference_cell = reference.split('!', 1)
                             reference_sheet_name = reference_sheet_name.strip("'")
                         else:
                             reference_sheet_name = sheet_name
@@ -130,6 +135,9 @@ class ExcelProcessor:
                             cell.value = reference_value
                         except KeyError:
                             print(f"Worksheet '{reference_sheet_name}' not found. Available sheets: {all_sheets}")
+                        except ValueError as e:
+                            print(
+                                f"Fehler beim Verarbeiten der Referenz in Zelle {cell.coordinate} im Blatt '{sheet_name}': {e}")
         self.workbook.save(self.modified_file)
 
     def check_plausibility(self):
