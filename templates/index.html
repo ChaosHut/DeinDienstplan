@@ -50,12 +50,21 @@
         }
 
         .alert-box {
-        background-color: #ffdddd; /* Roter Hintergrund */
-        border-left: 6px solid #f44336; /* Rote Linie auf der linken Seite */
-        margin: 15px 0; /* Etwas Abstand oben und unten */
-        padding: 10px 20px; /* Innenabstand */
-        color: red; /* Rote Schrift */
-        font-weight: bold; /* Fettschrift */
+            margin: 15px 0; /* Etwas Abstand oben und unten */
+            padding: 10px 20px; /* Innenabstand */
+            font-weight: bold; /* Fettschrift */
+        }
+
+        .alert-box.error {
+            background-color: #ffdddd; /* Roter Hintergrund */
+            border-left: 6px solid #f44336; /* Rote Linie auf der linken Seite */
+            color: red; /* Rote Schrift */
+        }
+
+        .alert-box.success {
+            background-color: #ddffdd; /* Grüner Hintergrund */
+            border-left: 6px solid #4CAF50; /* Grüne Linie auf der linken Seite */
+            color: green; /* Grüne Schrift */
     }
     </style>
 </head>
@@ -63,8 +72,8 @@
 <body>
 
     <div class="container">
-                <div class="alert-box">
-        Der Plan für Januar 24 kann derzeit nicht geladen werden. Ich kümmere mich in den kommenden Tagen um den Fehler. Probiert es gerne dann noch einmal. Viele Grüße, Nico
+                <div class="alert-box success">
+        Der Plan für Januar 2024 lässt sich jetzt laden. Meldet euch gerne wenn euch weitere Fehler auffallen. Viele Grüße, Nico.
     </div>
         <!-- Schritt 1 -->
         <h2>Schritt 1:</h2>
