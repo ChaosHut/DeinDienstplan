@@ -6,66 +6,110 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DeinDienstplan</title>
     <style>
-        /* Einige grundlegende Stile, um das Aussehen zu verbessern. Sie können sie nach Bedarf anpassen. */
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            border: 1px solid #e0e0e0;
-            box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
-        }
+/* Einige grundlegende Stile, um das Aussehen zu verbessern. Sie können sie nach Bedarf anpassen. */
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
+}
 
-        .separator {
-            border-bottom: 2px solid black;
-            margin: 10px 0;
-        }
+.separator {
+    border-bottom: 2px solid black;
+    margin: 10px 0;
+}
 
-        /* Ladeindikator Stile */
-        .loader-container {
-            display: none; /* Standardmäßig verbergen */
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            z-index: 1000; /* Damit es über anderen Elementen angezeigt wird */
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
+/* Ladeindikator Stile */
+.loader-container {
+    display: none; /* Standardmäßig verbergen */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 1000; /* Damit es über anderen Elementen angezeigt wird */
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
 
-        .loader {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 2s linear infinite;
-        }
+.loader {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 2s linear infinite;
+}
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 
-        .alert-box {
-            margin: 15px 0; /* Etwas Abstand oben und unten */
-            padding: 10px 20px; /* Innenabstand */
-            font-weight: bold; /* Fettschrift */
-        }
+.alert-box {
+    margin: 15px 0; /* Etwas Abstand oben und unten */
+    padding: 10px 20px; /* Innenabstand */
+    font-weight: bold; /* Fettschrift */
+}
 
-        .alert-box.error {
-            background-color: #ffdddd; /* Roter Hintergrund */
-            border-left: 6px solid #f44336; /* Rote Linie auf der linken Seite */
-            color: red; /* Rote Schrift */
-        }
+.alert-box.error {
+    background-color: #ffdddd; /* Roter Hintergrund */
+    border-left: 6px solid #f44336; /* Rote Linie auf der linken Seite */
+    color: red; /* Rote Schrift */
+}
 
-        .alert-box.success {
-            background-color: #ddffdd; /* Grüner Hintergrund */
-            border-left: 6px solid #4CAF50; /* Grüne Linie auf der linken Seite */
-            color: green; /* Grüne Schrift */
-    }
+.alert-box.success {
+    background-color: #ddffdd; /* Grüner Hintergrund */
+    border-left: 6px solid #4CAF50; /* Grüne Linie auf der linken Seite */
+    color: green; /* Grüne Schrift */
+}
+
+.coffee-button-container {
+    margin-top: 10px; /* Fügt etwas Abstand nach oben hinzu */
+}
+
+.coffee-link {
+    display: inline-flex; /* Ermöglicht die Ausrichtung des Links und Flexbox-Kind-Elemente */
+    text-decoration: none; /* Entfernt den Unterstrich */
+    color: inherit; /* Erbt die Textfarbe vom Elternelement */
+    width: auto; /* Passt die Breite automatisch an */
+}
+
+.coffee-container {
+    padding: 3px; /* Reduzierung des Innenabstands */
+    border: 1px solid black; /* Schmaler schwarzer Rand */
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15); /* Angepasster Schatteneffekt */
+    text-align: left;
+    background-color: white; /* Hintergrundfarbe */
+     color: black; /* Schriftfarbe auf Schwarz ändern */
+    border-radius: 3px; /* Angepasste abgerundete Ecken */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+
+.coffee-container img {
+    width: 20px; /* Weitere Reduzierung der Größe des Bildes */
+    margin-right: 3px; /* Angepasster Abstand zwischen Bild und Text */
+}
+
+.coffee-container p {
+    margin: 0;
+    font-size: 0.7em; /* Weitere Reduzierung der Schriftgröße */
+}
+
+.coffee-container:hover {
+    background-color: #f3f3f3; /* Leicht grauer Hintergrund beim Hovern */
+    cursor: pointer;
+    box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2); /* Verstärkter Schatteneffekt beim Hovern */
+}
+
+
     </style>
 </head>
 
@@ -116,10 +160,25 @@
         </button>
         <div class="separator"></div>
 
-        <!-- Kontaktinformation -->
-        <p style="font-size: 8pt;">DeinDienstplan - Kontakt:</p>
-        <p style="font-size: 8pt;">Nico Kluge, Tel: 82-8637, mail: n.kluge@asklepios.com</p>
+<!-- Kontaktinformation -->
+<div class="contact-info">
+    <p style="font-size: 8pt;">DeinDienstplan - Kontakt:</p>
+    <p style="font-size: 8pt;">Nico Kluge, Tel: 82-8637, mail: n.kluge@asklepios.com</p>
+
+    <!-- Kaffee spendieren Button -->
+    <div class="coffee-button-container">
+        <a href="https://paypal.me/ChaosHut?country.x=DE&locale.x=de_DE" target="_blank" class="coffee-link">
+            <div class="coffee-container">
+                <img src="coffee.png" alt="Kaffee">
+                <p>Nico einen Kaffee spendieren </p>
+            </div>
+        </a>
     </div>
+</div>
+
+
+
+
 
     <!-- Ladeindikator -->
     <div class="loader-container" id="loaderContainer">
