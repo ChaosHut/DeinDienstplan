@@ -78,14 +78,24 @@
     width: auto; /* Passt die Breite automatisch an */
 }
 
+@keyframes backgroundFade {
+    0% { background-color: red; }
+    25% { background-color: blue; }
+    50% { background-color: green; }
+    75% { background-color: yellow; }
+    100% { background-color: red; }
+}
+        
 .coffee-container {
     padding: 3px; /* Reduzierung des Innenabstands */
-    border: 1px solid black; /* Schmaler schwarzer Rand */
+    border: 2px solid black; /* Schmaler schwarzer Rand */
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15); /* Angepasster Schatteneffekt */
     text-align: left;
     background-color: white; /* Hintergrundfarbe */
-     color: black; /* Schriftfarbe auf Schwarz ändern */
+    color: black; /* Schriftfarbe auf Schwarz ändern */
     border-radius: 3px; /* Angepasste abgerundete Ecken */
+    animation: backgroundFade 5s linear infinite;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -107,6 +117,30 @@
     background-color: #f3f3f3; /* Leicht grauer Hintergrund beim Hovern */
     cursor: pointer;
     box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.2); /* Verstärkter Schatteneffekt beim Hovern */
+}
+
+/* Stile für das Popup */
+.coffee-popup {
+    visibility: hidden;
+    width: 160px;
+    background-color: black;
+    color: white;
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px 0;
+    position: absolute;
+    z-index: 10;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -80px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+/* Anzeigestil beim Hovern */
+.coffee-container:hover .coffee-popup {
+    visibility: visible;
+    opacity: 1;
 }
 
 
@@ -165,16 +199,17 @@
     <p style="font-size: 8pt;">DeinDienstplan - Kontakt:</p>
     <p style="font-size: 8pt;">Nico Kluge, Tel: 82-8637, mail: n.kluge@asklepios.com</p>
 
-    <!-- Kaffee spendieren Button -->
-    <div class="coffee-button-container">
-        <a href="https://paypal.me/ChaosHut?country.x=DE&locale.x=de_DE" target="_blank" class="coffee-link">
-            <div class="coffee-container">
-                <img src="{{ url_for('static', filename='coffee.png') }}" alt="Kaffee">
-                <p>Nico einen Kaffee spendieren </p>
-            </div>
-        </a>
-    </div>
+<!-- Kaffee spendieren Button (nur Bild, Text entfernt) -->
+<div class="coffee-button-container">
+    <a href="https://paypal.me/ChaosHut?country.x=DE&locale.x=de_DE" target="_blank" class="coffee-link">
+        <div class="coffee-container" id="coffeeContainer">
+            <img src="{{ url_for('static', filename='coffee.png') }}" alt="Kaffee">
+            <!-- Popup für Text -->
+            <div class="coffee-popup" id="coffeePopup">Nico einen Kaffee spendieren</div>
+        </div>
+    </a>
 </div>
+
 
 
 
@@ -333,6 +368,16 @@
                 // Ladeindikator verbergen, auch bei einem Fehler
                 document.getElementById("loaderContainer").style.display = "none";
             });
+        });
+
+        document.getElementById('coffeeContainer').addEventListener('mouseover', function() {
+            document.getElementById('coffeePopup').style.visibility = 'visible';
+            document.getElementById('coffeePopup').style.opacity = '1';
+        });
+
+        document.getElementById('coffeeContainer').addEventListener('mouseout', function() {
+            document.getElementById('coffeePopup').style.visibility = 'hidden';
+            document.getElementById('coffeePopup').style.opacity = '0';
         });
 
     </script>
