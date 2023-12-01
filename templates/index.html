@@ -78,12 +78,12 @@
     width: auto; /* Passt die Breite automatisch an */
 }
 
-@keyframes backgroundFade {
-    0% { background-color: red; }
-    25% { background-color: blue; }
-    50% { background-color: green; }
-    75% { background-color: yellow; }
-    100% { background-color: red; }
+@keyframes colorCycle {
+    0% { filter: hue-rotate(0deg) saturate(100%) brightness(1.2); }
+    25% { filter: hue-rotate(90deg) saturate(100%) brightness(1.2); }
+    50% { filter: hue-rotate(180deg) saturate(100%) brightness(1.2); }
+    75% { filter: hue-rotate(270deg) saturate(100%) brightness(1.2); }
+    100% { filter: hue-rotate(360deg) saturate(100%) brightness(1.2); }
 }
         
 .coffee-container {
@@ -94,7 +94,7 @@
     background-color: white; /* Hintergrundfarbe */
     color: black; /* Schriftfarbe auf Schwarz ändern */
     border-radius: 3px; /* Angepasste abgerundete Ecken */
-    animation: backgroundFade 5s linear infinite;
+    animation: colorCycle 5s linear infinite;
     position: relative;
     display: flex;
     align-items: center;
