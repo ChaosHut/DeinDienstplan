@@ -169,7 +169,6 @@ class ExcelProcessor:
         return True
 
     def show_schedule(self, selected_employee):
-
         # Set the localization to German, if available
         def set_locale(category, loc):
             try:
@@ -185,8 +184,6 @@ class ExcelProcessor:
         # Get the month and year from the tenth covered day
         tenth_day = datetime.datetime.strptime(covered_days[9].split()[0], '%d.%m.%Y')
         month_year = tenth_day.strftime('%B %Y')
-
-        # Extract month and year for comparison later
         month = tenth_day.month
         year = tenth_day.year
 
@@ -203,12 +200,18 @@ class ExcelProcessor:
                 # Get the date from the second row of the sheet
                 date = sheet.cell(row=2, column=col).value
 
-                # If the date is covered and belongs to the month and year, get the service of the selected employee and add it to the employee_schedule dictionary
-                if date and date.strftime('%d.%m.%Y %A') in covered_days and date.month == month and date.year == year:
-                    service = self.get_service(sheet, selected_employee, col)
-                    if date in self.feiertage:
-                        service += ' (Feiertag)'
-                    employee_schedule[date.strftime('%d.%m.%Y')] = service
+                # Check if the date is covered and belongs to the month and year
+                if date and date.strftime('%d.%m.%Y %A') in covered_days:
+                    if date.month == month and date.year == year:
+                        # Date is used for the schedule
+                        service = self.get_service(sheet, selected_employee, col)
+                        if date in self.feiertage:
+                            service += ' (Feiertag)'
+                        employee_schedule[date.strftime('%d.%m.%Y')] = service
+                        print(f"Tag verwendet: {date.strftime('%d.%m.%Y')}")
+                    else:
+                        # Date is not used for the schedule
+                        print(f"Tag ignoriert (nicht im Zielmonat/-jahr): {date.strftime('%d.%m.%Y')}")
 
         # Initialize a string to store the schedule of the selected employee
         schedule_text = f"Dienstplan für {selected_employee} - {month_year}\n\n"
@@ -232,6 +235,7 @@ class ExcelProcessor:
         schedule_text += disclaimer
 
         return schedule_text
+
 
     def get_service(self, sheet, employee, col):
         # Define a dictionary to map the row numbers to the services
