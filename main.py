@@ -48,14 +48,14 @@ class ExcelProcessor:
     ]
 
     def __init__(self, filepath):
-        self.filename = filepath  # Änderung hier
+        self.filename = filepath 
         self.workbook = load_workbook(filepath)
 
-        # Define relevant sheets
+        # Definiere relevante Tabellenblätter
         self.relevant_sheets = [sheet for sheet in self.workbook.sheetnames if
                                 re.match(r'^KW\d{1,2}$', sheet)]  # Hinzugefügt
 
-        # Create tempfiles directory if it doesn't exist
+        #  Erstelle das Verzeichnis "tempfiles", falls es nicht existiert.
         if not os.path.exists('tempfiles'):
             os.makedirs('tempfiles')
 
@@ -141,7 +141,7 @@ class ExcelProcessor:
         self.workbook.save(self.modified_file)
 
     def check_plausibility(self):
-        # Define the expected contents for each cell
+        # Definiere die erwarteten Inhalte für jede Zelle.
         expected_contents = {
             'A15': 'Eingriff',
             'A24': 'POB',
@@ -150,26 +150,26 @@ class ExcelProcessor:
             'A41': 'BD 2',
         }
 
-        # Iterate over the relevant sheets
+        # Iteriere über die relevanten Tabellenblätter.
         for sheet_name in self.relevant_sheets:
-            # Get the sheet from the workbook
+            # Hole das Tabellenblatt aus der Arbeitsmappe.
             sheet = self.workbook[sheet_name]
 
-            # Iterate over the expected contents
+            # Iteriere über die erwarteten Inhalte.
             for cell, expected_content in expected_contents.items():
-                # Get the actual content of the cell
+                # Hole den tatsächlichen Inhalt der Zelle.
                 actual_content = sheet[cell].value
 
-                # If the actual content does not contain the expected content, show an error message and return False
+                # Wenn der tatsächliche Inhalt nicht den erwarteten Inhalt enthält, zeige eine Fehlermeldung an und gebe False zurück.
                 if not actual_content or expected_content not in actual_content:
                     print("Fehler: Offenbar wurde die Sortierung der Wochenpläne verändert oder Sie haben einen alten Dienstlan geladen. Eine verlässliche Extraktion der Dienste ist nicht gewährleistet. Bitte informieren Sie den Entwickler")
                     return False
 
-        # If all the checks passed, return True
+        # Wenn alle Überprüfungen bestanden wurden, gebe True zurück.
         return True
 
     def show_schedule(self, selected_employee):
-        # Set the localization to German, if available
+        # Setze die Lokalisierung auf Deutsch, falls verfügbar.
         def set_locale(category, loc):
             try:
                 locale.setlocale(category, loc)
@@ -178,59 +178,59 @@ class ExcelProcessor:
 
         set_locale(locale.LC_TIME, 'de_DE.UTF-8')
 
-        # Get the covered days from the workbook
+        # Hole die abgedeckten Tage aus der Arbeitsmappe.
         covered_days = get_covered_days(self.workbook, self.relevant_sheets)
 
-        # Get the month and year from the tenth covered day
+        # Hole den Monat und das Jahr vom zehnten abgedeckten Tag.
         tenth_day = datetime.datetime.strptime(covered_days[9].split()[0], '%d.%m.%Y')
         month_year = tenth_day.strftime('%B %Y')
         month = tenth_day.month
         year = tenth_day.year
 
-        # Initialize a dictionary to store the schedule of the selected employee
+        # Initialisiere ein Wörterbuch, um den Zeitplan des ausgewählten Mitarbeiters zu speichern.
         employee_schedule = {}
 
-        # Iterate over the relevant sheets
+        # Iteriere über die relevanten Tabellenblätter.
         for sheet_name in self.relevant_sheets:
-            # Get the sheet from the workbook
+            # Hole das Tabellenblatt aus der Arbeitsmappe.
             sheet = self.workbook[sheet_name]
 
-            # Iterate over the columns of the sheet
+            # Iteriere über die Spalten des Tabellenblatts.
             for col in range(4, 11):
-                # Get the date from the second row of the sheet
+                # Hole das Datum aus der zweiten Zeile des Tabellenblatts.
                 date = sheet.cell(row=2, column=col).value
 
-                # Check if the date is covered and belongs to the month and year
+                # Prüfe, ob das Datum abgedeckt ist und zum Monat und Jahr gehört.
                 if date and date.strftime('%d.%m.%Y %A') in covered_days:
                     if date.month == month and date.year == year:
-                        # Date is used for the schedule
+                        # Das Datum wird für den Zeitplan verwendet.
                         service = self.get_service(sheet, selected_employee, col)
                         if date in self.feiertage:
                             service += ' (Feiertag)'
                         employee_schedule[date.strftime('%d.%m.%Y')] = service
                         print(f"Tag verwendet: {date.strftime('%d.%m.%Y')}")
                     else:
-                        # Date is not used for the schedule
+                        # Das Datum wird nicht für den Zeitplan verwendet.
                         print(f"Tag ignoriert (nicht im Zielmonat/-jahr): {date.strftime('%d.%m.%Y')}")
 
-        # Initialize a string to store the schedule of the selected employee
+        # Initialisiere einen String, um den Zeitplan des ausgewählten Mitarbeiters zu speichern.
         schedule_text = f"Dienstplan für {selected_employee} - {month_year}\n\n"
 
-        # Define a list of weekdays in German
+        # Definiere eine Liste von Wochentagen auf Deutsch.
         weekdays_german = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
 
-        # Append the formatted employee schedule to the schedule_text string
+        # Hänge den formatierten Mitarbeiterzeitplan an den schedule_text-String an.
         for i, (date, service) in enumerate(employee_schedule.items()):
-            # Get the weekday in German
+            # Hole den Wochentag auf Deutsch.
             weekday = weekdays_german[datetime.datetime.strptime(date, '%d.%m.%Y').weekday()]
             line = f"{date} ({weekday}): {service}\n"
             schedule_text += line
 
-            # Insert a line after every Sunday
+            # Füge eine Zeile nach jedem Sonntag ein.
             if weekday == 'Sonntag':
                 schedule_text += '-' * 50 + '\n'
 
-        # Insert the disclaimer text
+        # Füge den Haftungsausschluss-Text ein.
         disclaimer = "\nBitte überprüft den Plan auf seine Richtigkeit. Achtet im offiziellen Plan auf kurzfristige Änderungen!\n"
         schedule_text += disclaimer
 
@@ -238,7 +238,7 @@ class ExcelProcessor:
 
 
     def get_service(self, sheet, employee, col):
-        # Define a dictionary to map the row numbers to the services
+        # Definiere ein Wörterbuch, um die Zeilennummern den Diensten zuzuordnen.
         services = {
             3: 'OP-Koordination',
             4: 'FD-OP',
@@ -281,7 +281,7 @@ class ExcelProcessor:
             42: 'Rufdienst',
         }
 
-        # Add 'Frei' service for rows 43 to 73
+        # Füge den Dienst 'Frei' für die Zeilen 43 bis 73 hinzu.
         for row in range(43, 74):
             services[row] = 'Frei'
 
@@ -294,19 +294,19 @@ class ExcelProcessor:
                     return "PJ-Unterricht"
             return "Frei"
 
-        # Get the date from the current column and determine the service for row 12
+        # Hole das Datum aus der aktuellen Spalte und bestimme den Dienst für Zeile 12.
         current_date = sheet.cell(row=2, column=col).value
 
-        # Check if the current date is a Friday
+        # Überprüfe, ob das aktuelle Datum ein Freitag ist.
         if current_date and current_date.weekday() == 4:  # Wenn es Freitag ist
             services[12] = 'FD10'
         else:
             services[12] = 'FD-lang'
 
-        # Initialize a list to store the services of the employee
+        # Initialisiere eine Liste, um die Dienste des Mitarbeiters zu speichern.
         employee_services = []
 
-        # Iterate over the rows of the sheet
+        # Iteriere über die Zeilen des Tabellenblatts.
         for row in range(3, 74):
             cell_value = sheet.cell(row=row, column=col).value
             if cell_value:
@@ -323,7 +323,7 @@ class ExcelProcessor:
                                 service += '/Nacht'
                         employee_services.append(service)
 
-        # Wenn der Mitarbeitername in keiner Zeile gefunden wird
+        # Wenn der Mitarbeitername in keiner Zeile gefunden wird.
         if not employee_services:
             date = sheet.cell(row=2, column=col).value
 
@@ -349,21 +349,21 @@ def upload_file():
         filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filename)
 
-        # Load the workbook
+        # Lade die Arbeitsmappe.
         workbook = load_workbook(filename)
 
-        # Define the relevant sheets based on your provided pattern
+        # Definiere die relevanten Tabellenblätter basierend auf dem KW-Muster.
         relevant_sheets = [sheet for sheet in workbook.sheetnames if re.match(r'^KW\d{1,2}$', sheet)]
 
-        # Create an instance of ExcelProcessor and replace the references
+        # Erstelle eine Instanz von ExcelProcessor und ersetze die Verweise.
         processor = ExcelProcessor(filename)
         processor.relevant_sheets = relevant_sheets
         processor.replace_references_with_values()
 
-        # Start the analysis to get employees
+        # Starte die Analyse, um die Mitarbeiter zu erhalten.
         employees = processor.start_analysis()
 
-        # Anstatt die HTML-Seite direkt zurückzugeben, geben Sie die UID und die Mitarbeiterliste als JSON zurück:
+        # Gib die UID und die Mitarbeiterliste als JSON zurück:
         return jsonify(uid=processor.unique_id, employees=employees)
 
     else:
@@ -373,21 +373,21 @@ def upload_file():
 
 
 def get_covered_days(workbook, relevant_sheets):
-    # Initialize a list to store the covered days
+    #  Initialisiere eine Liste, um die abgedeckten Tage zu speichern.
     covered_days = []
 
-    # Iterate over the relevant sheets
+    # Iteriere über die relevanten Tabellenblätter.
     for sheet_name in relevant_sheets:
-        # Get the sheet from the workbook
+        # Hole das Tabellenblatt aus der Arbeitsmappe.
         sheet = workbook[sheet_name]
 
-        # Get the dates from the second row of the sheet
+        # Hole die Daten aus der zweiten Zeile des Tabellenblatts.
         dates = [sheet.cell(row=2, column=col).value for col in range(4, 11)]
 
-        # Append the dates to the covered_days list
+        # Füge die Daten der abgedeckten Tage der covered_days-Liste hinzu.
         covered_days.extend(dates)
 
-        # Convert the dates to the desired format
+        # Konvertiere die Daten in das gewünschte Format.
     covered_days = [date.strftime('%d.%m.%Y %A') for date in covered_days if isinstance(date, datetime.datetime)]
 
     return covered_days
@@ -399,34 +399,31 @@ def handle_employee_selection():
     selected_employee = data.get('employee')
     uid = data.get('uid')
 
-    # Drucken Sie den ausgewählten Mitarbeiter in die Konsole
+    # Drucken der ausgewählten Mitarbeiter in die Konsole
     print(f"Ausgewählter Mitarbeiter: {selected_employee}")
 
-    # Erstellen Sie den Prozessor mit der Datei, die der UID entspricht:
+    # Erstellet den Prozessor mit der Datei, die der UID entspricht:
     filepath = f"tempfiles/modified_file_{uid}.xlsx"
     processor = ExcelProcessor(filepath)
 
-    # Überprüfen Sie die Plausibilität
+    # Überprüfe die Plausibilität
     if not processor.check_plausibility():
         error_message = ("Fehler: Offenbar wurde die Sortierung der Wochenpläne verändert oder "
                          "Sie haben einen alten Dienstlan geladen. Eine verlässliche Extraktion der Dienste ist "
                          "nicht gewährleistet. Bitte informieren Sie den Entwickler")
         return jsonify(message="Fehler bei der Plausibilitätsprüfung", schedule=error_message)
 
-    # Get the schedule for the selected employee
+    #  Hole den Zeitplan für den ausgewählten Mitarbeiter.
     schedule = processor.show_schedule(selected_employee)
 
-    # Return the schedule in the response
+    # Gib den Zeitplan in der Antwort zurück.
     return jsonify(message="Erfolgreich verarbeitet", schedule=schedule)
 
 
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
-    # Sie können hier Daten aus dem Post-Body extrahieren, falls benötigt.
-    # z.B.: data = request.json
-    # Der eigentliche Inhalt, der ins PDF soll (z.B. Dienstplan), sollte wahrscheinlich vom Frontend übertragen werden.
 
-    # Erstellen Sie das PDF (ich übernehme den größten Teil Ihres Codes)
+    # Erstelle das PDF
     schedule_text = request.json.get("schedule_text", "")
 
     pdf = FPDF()
@@ -505,7 +502,7 @@ def log_action(schedule_first_line, filetype):
     }
 
     # Senden des Webhooks
-    response = requests.post(webhook_url, json=data) # Verwenden Sie json=data, um es als JSON zu senden
+    response = requests.post(webhook_url, json=data) 
     return response
 
 if __name__ == '__main__':
