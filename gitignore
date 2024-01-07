@@ -1,4 +1,3 @@
-
 # Ignore tempfiles and uploads folders
 tempfiles/
 uploads/
@@ -11,3 +10,6 @@ __pycache__/
 # If using virtual environments, ignore those as well
 venv/
 *.venv
+
+# Ignore local virtualenv directory
+.local/share/virtualenv/
