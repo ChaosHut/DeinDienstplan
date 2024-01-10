@@ -5,6 +5,7 @@ from openpyxl import load_workbook
 import requests
 from fpdf import FPDF
 from ics import Calendar, Event
+#from datetime import datetime, timedelta
 import datetime
 import sys
 import re
@@ -455,13 +456,50 @@ def generate_pdf():
 
 @app.route('/generate_ics', methods=['POST'])
 def generate_ics():
-    # Die ics_export_action-Funktion hier umformatieren:
-
     data = request.json
     schedule_text = data['schedule_text']
-
+    event_type = data.get('event_type', 'fullDay')  # Standardmäßig 'fullDay'
+  
     c = Calendar()
 
+    shift_times = {
+        "OP-Koordination": {"start": "06:20", "end": "14:50"},
+        "FD-OP": {"start": "06:20", "end": "14:50"},
+        "FD-lang": {"start": "06:20", "end": "17:05"},
+        "FD-Außenbezirke": {"start": "06:20", "end": "14:50"},
+        "EGR-OA": {"start": "06:20", "end": "14:50"},
+        "FD-EGR": {"start": "06:20", "end": "14:50"},
+        "FD-BronchoHKL": {"start": "06:20", "end": "14:50"},
+        "FD-Geb": {"start": "06:20", "end": "14:50"},
+        "SD930": {"start": "08:30", "end": "17:30"},
+        "SD11": {"start": "09:00", "end": "17:30"},
+        "SD13": {"start": "12:00", "end": "20:30"},
+        "POBE": {"start": "09:00", "end": "17:30"},
+        "Prämed": {"start": "06:20", "end": "14:50"},
+        "OA-ZOP": {"start": "06:20", "end": "14:50"},
+        "FD-Einarbeitung": {"start": "06:20", "end": "14:50"},
+        "FD-OA-Int": {"start": "05:50", "end": "14:20"},
+        "FD-FA-Int": {"start": "05:50", "end": "14:20"},
+        "FD-Int": {"start": "05:50", "end": "14:20"},
+        "SD-Int": {"start": "13:20", "end": "21:50"},
+        "ND-Int": {"start": "20:50", "end": "06:50"},  # Über Mitternacht
+        "NEF-Tag": {"start": "05:50", "end": "18:35"},
+        "NEF-Nacht": {"start": "17:50", "end": "06:35"},  # Über Mitternacht
+        "BD1": {"start": "14:40", "end": "06:40"},  # Über Mitternacht
+        "BD2": {"start": "14:40", "end": "06:40"},  # Über Mitternacht
+        "FD10": {"start": "09:00", "end": "17:30"},  
+        "BD1/Tag": {"start": "07:00", "end": "19:00"},
+        "BD1/Nacht": {"start": "19:00", "end": "07:00"},  # Über Mitternacht
+        "BD2/Tag": {"start": "07:00", "end": "19:00"},
+        "BD2/Nacht": {"start": "19:00", "end": "07:00"}  # Über Mitternacht
+        # 'ITW' und 'Rufdienst' sind nicht enthalten, da sie immer Ganztagestermine sind.
+    }
+    # Wochenendzeiten hinzufügen
+    weekend_shift_times = {
+        "FD-Int": {"start": "05:50", "end": "16:20"},
+        "SD-Int": {"start": "15:50", "end": "21:50"}
+    }
+  
     lines = schedule_text.split('\n')
     for line in lines:
         parts = line.split(": ")
@@ -474,21 +512,42 @@ def generate_ics():
                 formatted_date = f"{year}-{month}-{day}"
                 e = Event()
                 e.name = service
-                e.begin = formatted_date
-                e.make_all_day()
+  
+                if event_type == 'shiftTimes' and service in shift_times:
+                    # Wochentag ermitteln
+                    day_of_week = datetime.datetime.strptime(formatted_date, "%Y-%m-%d").weekday()
+  
+                    # Überprüfen, ob es sich um einen Wochentag oder ein Wochenende handelt
+                    if day_of_week >= 5 and service in weekend_shift_times:  # 5 für Samstag, 6 für Sonntag
+                        start_time = weekend_shift_times[service]["start"]
+                        end_time = weekend_shift_times[service]["end"]
+                    else:
+                        start_time = shift_times[service]["start"]
+                        end_time = shift_times[service]["end"]
+  
+                    start_datetime = datetime.datetime.strptime(f"{formatted_date} {start_time}", "%Y-%m-%d %H:%M")
+                    end_datetime = datetime.datetime.strptime(f"{formatted_date} {end_time}", "%Y-%m-%d %H:%M")
+  
+                    if end_datetime <= start_datetime:
+                        end_datetime += datetime.timedelta(days=1)
+  
+                    e.begin = start_datetime
+                    e.end = end_datetime
+                else:
+                    e.begin = formatted_date
+                    e.make_all_day()
+  
                 c.events.add(e)
-
+  
     employee_name = lines[0].split(' ')[2] if len(lines) > 0 else "Unbekannt"
     month_year = ' '.join(lines[0].split(' ')[-2:]) if len(lines) > 0 else "Unbekannt"
     ics_filename = f"Dienstplan-{employee_name}-{month_year}.ics"
-
+  
+    ics_content = c.serialize()  # Serialisieren des Kalenders
     with open(ics_filename, 'w', encoding='utf-8') as my_file:
-        my_file.writelines(str(c))
-
-    firstLine = schedule_text.splitlines()[0]
-    log_action(firstLine, "ICS erstellt")
-
-    return send_file(ics_filename, as_attachment=True)
+        my_file.write(ics_content)
+  
+    return send_file(ics_filename, as_attachment=True, download_name=ics_filename)
 
 
 def log_action(schedule_first_line, filetype):

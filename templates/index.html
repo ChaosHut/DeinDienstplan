@@ -143,13 +143,56 @@
     opacity: 1;
 }
 
+      /* Stil für das Popup-Dialog */
+      #icsPopup {
+          display: none;
+          position: fixed;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          padding: 20px;
+          background: white;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
+          z-index: 1001;
+      }
+
+      /* Stil für den Schließen-Button im Popup */
+      #closePopupButton {
+          border: none;
+          background: none;
+          font-size: 1.2em;
+          color: #007BFF;
+          cursor: pointer;
+      }
+
+      /* Stil für die Buttons im Popup */
+      #icsPopup button {
+          cursor: pointer;
+          padding: 10px 15px;
+          background-color: #007BFF;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          text-align: center;
+          margin: 5px; /* Etwas Abstand zwischen den Buttons */
+          font-size: 1em;
+      }
+
+      #icsPopup button:hover {
+          background-color: #0056b3; /* Dunklere Farbe beim Hovern */
+      }
+
 
     </style>
 </head>
 
 <body>
-
     <div class="container">
+      <div class="alert-box success">
+          Neu: Die .ics-Dateien für euren Kalender könnt ihr jetzt auch mit den tatsächlichen Dienstzeiten exportieren.
+      </div>
         <!-- Schritt 1 -->
         <h2>Schritt 1:</h2>
         <form action="/upload" method="post" enctype="multipart/form-data" id="uploadForm">
@@ -190,6 +233,18 @@
             ICS-Erstellen
         </button>
         <div class="separator"></div>
+      
+      <!-- Popup-Dialog für ICS-Erstellungsoptionen -->
+      <div id="icsPopup">
+          <div style="text-align: right;">
+              <button id="closePopupButton">&times;</button>
+          </div>
+          <h3>.ics-Datei erstellen mit:</h3>
+          <button id="fullDayEventButton">Ganztagesterminen</button>
+          <button id="shiftTimesEventButton">tatsächlichen Schichtzeiten</button>
+      </div>
+
+
 
 <!-- Kontaktinformation -->
 <div class="contact-info">
@@ -325,47 +380,81 @@
             });
         });
 
-        // Für den ICS-Button:
-        document.getElementById("icsButton").addEventListener("click", function() {
-            var scheduleText = document.getElementById("scheduleOutput").value;
+      // Event-Listener für den ICS-Button, um das Popup anzuzeigen
+      document.getElementById("icsButton").addEventListener("click", function() {
+          // Überprüfen, ob der Text leer ist
+          var scheduleText = document.getElementById("scheduleOutput").value;
+          if (!scheduleText.trim()) {
+              alert("Sie haben keinen Dienstplan einer Mitarbeiter:In ausgewählt.");
+              return;
+          }
 
-            // Überprüfen, ob der Text leer ist
-            if (!scheduleText.trim()) {
-                alert("Sie haben keinen Dienstplan einer Mitarbeiter:In ausgewählt.");
-                return;
-            }
+          // Popup anzeigen
+          document.getElementById("icsPopup").style.display = "block";
+      });
 
-            // Ladeindikator anzeigen
-            document.getElementById("loaderContainer").style.display = "flex";
+      // Event-Listener für Ganztagesterminen-Button im Popup
+      document.getElementById("fullDayEventButton").addEventListener("click", function() {
+          createICSFile("fullDay");
+      });
 
-            // Wenn der Text nicht leer ist, wird der folgende Code ausgeführt:
-            fetch('/generate_ics', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    schedule_text: scheduleText
-                })
-            })
-            .then(response => response.blob())
-            .then(blob => {
-                // Ladeindikator verbergen
-                document.getElementById("loaderContainer").style.display = "none";
+      // Event-Listener für tatsächlichen Schichtzeiten-Button im Popup
+      document.getElementById("shiftTimesEventButton").addEventListener("click", function() {
+          createICSFile("shiftTimes");
+      });
 
-                // Download der ICS-Datei
-                var link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = "Dienstplan.ics";
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            })
-            .catch(() => {
-                // Ladeindikator verbergen, auch bei einem Fehler
-                document.getElementById("loaderContainer").style.display = "none";
-            });
-        });
+      // Event-Listener für den Schließen-Button des Popups
+      document.getElementById("closePopupButton").addEventListener("click", function() {
+          document.getElementById("icsPopup").style.display = "none";
+      });
+
+
+      // Funktion zum Erstellen der ICS-Datei (angepasst)
+      function createICSFile(type) {
+          var scheduleText = document.getElementById("scheduleOutput").value;
+
+          // Ladeindikator anzeigen
+          document.getElementById("loaderContainer").style.display = "flex";
+
+          fetch('/generate_ics', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  schedule_text: scheduleText,
+                  event_type: type  // Fügt den Typ der Erstellung hinzu
+              })
+          })
+          .then(response => {
+              // Extrahieren des Dateinamens aus dem Response-Header
+              const contentDisposition = response.headers.get('Content-Disposition');
+              const match = contentDisposition && contentDisposition.match(/filename="(.+?)"/);
+              const filename = match ? match[1] : 'Dienstplan.ics';
+
+              return response.blob().then(blob => ({ blob, filename }));
+          })
+          .then(({ blob, filename }) => {
+              // Ladeindikator verbergen
+              document.getElementById("loaderContainer").style.display = "none";
+
+              // Verbergen des Popups
+              document.getElementById("icsPopup").style.display = "none";
+
+              // Download der ICS-Datei mit dem extrahierten Dateinamen
+              var link = document.createElement("a");
+              link.href = URL.createObjectURL(blob);
+              link.download = filename;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+          })
+          .catch(() => {
+              // Ladeindikator verbergen, auch bei einem Fehler
+              document.getElementById("loaderContainer").style.display = "none";
+          });
+      }
+
 
         document.getElementById('coffeeContainer').addEventListener('mouseover', function() {
             document.getElementById('coffeePopup').style.visibility = 'visible';
