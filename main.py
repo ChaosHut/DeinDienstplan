@@ -163,7 +163,7 @@ class ExcelProcessor:
 
                 # Wenn der tatsächliche Inhalt nicht den erwarteten Inhalt enthält, zeige eine Fehlermeldung an und gebe False zurück.
                 if not actual_content or expected_content not in actual_content:
-                    print("Fehler: Offenbar wurde die Sortierung der Wochenpläne verändert oder Sie haben einen alten Dienstlan geladen. Eine verlässliche Extraktion der Dienste ist nicht gewährleistet. Bitte informieren Sie den Entwickler")
+                    print("Fehler: Offenbar wurde die Sortierung der Wochenpläne verändert oder du hast einen alten Dienstlan geladen. Eine verlässliche Extraktion der Dienste ist nicht gewährleistet. Bitte informiere den Entwickler")
                     return False
 
         # Wenn alle Überprüfungen bestanden wurden, gebe True zurück.
@@ -424,10 +424,58 @@ def handle_employee_selection():
 
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
+    # Definition der Schichtzeiten
+    shift_times = {
+        "OP-Koordination": {"start": "07:20", "end": "15:50"},
+        "FD-OP": {"start": "07:20", "end": "15:50"},
+        "FD-lang": {"start": "07:20", "end": "18:05"},
+        "FD-Außenbezirke": {"start": "07:20", "end": "15:50"},
+        "EGR-OA": {"start": "07:20", "end": "15:50"},
+        "FD-EGR": {"start": "07:20", "end": "15:50"},
+        "FD-BronchoHKL": {"start": "07:20", "end": "15:50"},
+        "FD-Geb": {"start": "07:20", "end": "15:50"},
+        "SD930": {"start": "09:30", "end": "18:30"},
+        "SD11": {"start": "10:00", "end": "18:30"},
+        "SD13": {"start": "13:00", "end": "21:30"},
+        "POBE": {"start": "10:00", "end": "18:30"},
+        "Prämed": {"start": "07:20", "end": "15:50"},
+        "OA-ZOP": {"start": "07:20", "end": "15:50"},
+        "FD-Einarbeitung": {"start": "07:20", "end": "15:50"},
+        "FD-OA-Int": {"start": "06:50", "end": "15:20"},
+        "FD-FA-Int": {"start": "06:50", "end": "15:20"},
+        "FD-Int": {"start": "06:50", "end": "15:20"},
+        "SD-Int": {"start": "14:20", "end": "22:50"},
+        "ND-Int": {"start": "21:50", "end": "07:50"},  # Über Mitternacht
+        "NEF-Tag": {"start": "06:50", "end": "19:35"},
+        "NEF-Nacht": {"start": "18:50", "end": "07:35"},  # Über Mitternacht
+        "BD1": {"start": "15:40", "end": "07:40"},  # Über Mitternacht
+        "BD2": {"start": "15:40", "end": "07:40"},  # Über Mitternacht
+        "FD10": {"start": "10:00", "end": "18:30"},  
+        "BD1/Tag": {"start": "08:00", "end": "20:00"},
+        "BD1/Nacht": {"start": "20:00", "end": "08:00"},  # Über Mitternacht
+        "BD2/Tag": {"start": "08:00", "end": "20:00"},
+        "BD2/Nacht": {"start": "20:00", "end": "08:00"}  # Über Mitternacht
+    }
+  
+    weekend_shift_times = {
+        "FD-Int": {"start": "06:50", "end": "17:20"},
+        "SD-Int": {"start": "16:50", "end": "22:50"}
+    }
 
-    # Erstelle das PDF
+
+    def get_shift_time(service, date_str):
+      """
+      Ermittle die Schichtzeiten für einen gegebenen Dienst und Datum.
+      """
+      day_of_week = datetime.datetime.strptime(date_str, "%d.%m.%Y").weekday()
+  
+      # Wochentag oder Wochenende?
+      shift_time_dict = weekend_shift_times if day_of_week >= 5 and service in weekend_shift_times else shift_times
+  
+      return shift_time_dict.get(service, {"start": "(ganztägig)", "end": ""})
+
+    # PDF-Erstellung
     schedule_text = request.json.get("schedule_text", "")
-
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=8)
@@ -435,23 +483,47 @@ def generate_pdf():
     lines = schedule_text.split('\n')
     for line in lines:
         if 'Samstag' in line or 'Sonntag' in line:
-            pdf.set_fill_color(200, 200, 200)
+            pdf.set_fill_color(200, 200, 200)  # Hintergrund für Wochenendtage
         else:
-            pdf.set_fill_color(255, 255, 255)
-        pdf.multi_cell(0, 5, line, fill=True)
+            pdf.set_fill_color(255, 255, 255)  # Hintergrund für Wochentage
+  
+        parts = line.split(": ")
+        if len(parts) == 2:
+            date_str, service = parts
+            date_str_for_shift_time = date_str.split(' ')[0].strip()
+            shift_time = get_shift_time(service, date_str_for_shift_time)
+            if shift_time['start'] == "(ganztägig)":
+                time_info = " (ganztägig)"
+            else:
+                time_info = f" ({shift_time['start']} - {shift_time['end']})" if shift_time['start'] else ""
 
-    adjusted_time = datetime.datetime.now() + datetime.timedelta(hours=2)  # Addiere 2 Stunden
+  
+            # Dienst in schwarzer Schrift
+            pdf.set_text_color(0, 0, 0)  # Schwarze Farbe für den Dienst
+            pdf.cell(35, 5, date_str + ":", ln=False, fill=True)  # Breite für Datum
+            pdf.cell(60, 5, service, ln=False, fill=True)  # Breite für Dienst
+  
+            # Uhrzeiten in grauer Schrift
+            pdf.set_text_color(100, 100, 100)  # Graue Farbe für die Uhrzeiten
+            pdf.cell(40, 5, time_info, ln=True, fill=True)  # Breite für Uhrzeiten
+        else:
+            # Für Zeilen ohne Dienst
+            pdf.set_text_color(0, 0, 0)  # Schwarze Schriftfarbe
+            pdf.multi_cell(0, 5, line, fill=True)
+
+
+    # Hinzufügen des Erstellungsdatums
+    adjusted_time = datetime.datetime.now() + datetime.timedelta(hours=2)
     creation_date = adjusted_time.strftime('%d.%m.%Y')
     creation_time = adjusted_time.strftime('%H:%M')
     pdf.multi_cell(0, 10, f"Erstellt am {creation_date} um {creation_time} Uhr", align='L')
 
-    # Statt es auf die Festplatte zu speichern, speichern wir es in den Speicher.
-    pdf_content = pdf.output(dest='S').encode('latin1')
-
+    # Log-Aktion
     firstLine = schedule_text.splitlines()[0]
     log_action(firstLine, "PDF erstellt")
 
-    # Antwort mit PDF-Inhalt
+    # PDF-Inhalt als Antwort senden
+    pdf_content = pdf.output(dest='S').encode('latin1')
     response = Response(pdf_content, content_type='application/pdf')
     return response
 
@@ -463,6 +535,7 @@ def generate_ics():
   
     c = Calendar()
 
+  #Alle Schichtzeiten hier in UTC (Tatsächliche Zeitzone durch Kalenderprogramm beim User)
     shift_times = {
         "OP-Koordination": {"start": "06:20", "end": "14:50"},
         "FD-OP": {"start": "06:20", "end": "14:50"},
