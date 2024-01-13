@@ -308,7 +308,7 @@ class ExcelProcessor:
         # Initialisiere eine Liste, um die Dienste des Mitarbeiters zu speichern.
         employee_services = []
 
-        # Iteriere über die Zeilen des Tabellenblatts.
+        # Erkenne Tag/Nacht Dienst anhand der Position relativ zum /-Zeichen.
         for row in range(3, 74):
             cell_value = sheet.cell(row=row, column=col).value
             if cell_value:
@@ -459,7 +459,7 @@ def generate_pdf():
   
     weekend_shift_times = {
         "FD-Int": {"start": "06:50", "end": "17:20"},
-        "SD-Int": {"start": "16:50", "end": "22:50"}
+        "SD-Int": {"start": "16:20", "end": "22:50"}
     }
 
 
@@ -517,7 +517,11 @@ def generate_pdf():
     creation_date = adjusted_time.strftime('%d.%m.%Y')
     creation_time = adjusted_time.strftime('%H:%M')
     pdf.multi_cell(0, 10, f"Erstellt am {creation_date} um {creation_time} Uhr", align='L')
-
+  
+    # Bild einfügen - Pfad aktualisiert
+    image_path = "static/fist.png"  # Pfad zum Bild in static-Ordner
+    pdf.image(image_path, x=pdf.get_x(), y=pdf.get_y(), w=30)  # Größe des Bildes anpassen
+    
     # Log-Aktion
     firstLine = schedule_text.splitlines()[0]
     log_action(firstLine, "PDF erstellt")
@@ -571,7 +575,7 @@ def generate_ics():
     # Wochenendzeiten hinzufügen
     weekend_shift_times = {
         "FD-Int": {"start": "05:50", "end": "16:20"},
-        "SD-Int": {"start": "15:50", "end": "21:50"}
+        "SD-Int": {"start": "15:20", "end": "21:50"}
     }
   
     lines = schedule_text.split('\n')
