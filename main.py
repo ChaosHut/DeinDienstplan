@@ -480,6 +480,9 @@ def generate_pdf():
     pdf.add_page()
     pdf.set_font("Arial", size=8)
 
+    # Deaktiviere automatischen Seitenumbruch
+    pdf.set_auto_page_break(auto=False)
+    
     lines = schedule_text.split('\n')
     for line in lines:
         if 'Samstag' in line or 'Sonntag' in line:
@@ -518,10 +521,15 @@ def generate_pdf():
     creation_time = adjusted_time.strftime('%H:%M')
     pdf.multi_cell(0, 10, f"Erstellt am {creation_date} um {creation_time} Uhr", align='L')
   
-    # Bild einfügen - Pfad aktualisiert
-    image_path = "static/fist.png"  # Pfad zum Bild in static-Ordner
-    pdf.image(image_path, x=pdf.get_x(), y=pdf.get_y(), w=30)  # Größe des Bildes anpassen
-    
+    # Fußzeilentext definieren
+    footer_text = "- DeinDienstplan ist ein Webservice und verursacht Betriebskosten. Wenn das Programm dir nützlich ist, erwäge bitte eine Spende. -"
+  
+    # Fußzeilentext hinzufügen
+    footer_y_position = 297 - 20  # 297 mm ist die Höhe einer A4-Seite, 20 mm Abstand vom unteren Rand
+    pdf.set_y(footer_y_position)
+    pdf.set_font("Arial", size=6)
+    pdf.cell(0, 10, footer_text, 0, 0, 'C')
+
     # Log-Aktion
     firstLine = schedule_text.splitlines()[0]
     log_action(firstLine, "PDF erstellt")
