@@ -301,7 +301,7 @@ class ExcelProcessor:
 
         # Überprüfe, ob das aktuelle Datum ein Freitag ist.
         if current_date and current_date.weekday() == 4:  # Wenn es Freitag ist
-            services[12] = 'FD10'
+            services[12] = 'SD10'
         else:
             services[12] = 'FD-lang'
 
@@ -435,7 +435,7 @@ def generate_pdf():
         "FD-BronchoHKL": {"start": "07:20", "end": "15:50"},
         "FD-Geb": {"start": "07:20", "end": "15:50"},
         "SD930": {"start": "09:30", "end": "18:30"},
-        "SD11": {"start": "10:00", "end": "18:30"},
+        "SD11": {"start": "10:00", "end": "19:30"},
         "SD13": {"start": "13:00", "end": "21:30"},
         "POBE": {"start": "10:00", "end": "18:30"},
         "Prämed": {"start": "07:20", "end": "15:50"},
@@ -450,7 +450,7 @@ def generate_pdf():
         "NEF-Nacht": {"start": "18:50", "end": "07:35"},  # Über Mitternacht
         "BD1": {"start": "15:40", "end": "07:40"},  # Über Mitternacht
         "BD2": {"start": "15:40", "end": "07:40"},  # Über Mitternacht
-        "FD10": {"start": "10:00", "end": "18:30"},  
+        "SD10": {"start": "10:00", "end": "18:30"},  
         "BD1/Tag": {"start": "08:00", "end": "20:00"},
         "BD1/Nacht": {"start": "20:00", "end": "08:00"},  # Über Mitternacht
         "BD2/Tag": {"start": "08:00", "end": "20:00"},
@@ -558,7 +558,7 @@ def generate_ics():
         "FD-BronchoHKL": {"start": "06:20", "end": "14:50"},
         "FD-Geb": {"start": "06:20", "end": "14:50"},
         "SD930": {"start": "08:30", "end": "17:30"},
-        "SD11": {"start": "09:00", "end": "17:30"},
+        "SD11": {"start": "09:00", "end": "18:30"},
         "SD13": {"start": "12:00", "end": "20:30"},
         "POBE": {"start": "09:00", "end": "17:30"},
         "Prämed": {"start": "06:20", "end": "14:50"},
@@ -573,7 +573,7 @@ def generate_ics():
         "NEF-Nacht": {"start": "17:50", "end": "06:35"},  # Über Mitternacht
         "BD1": {"start": "14:40", "end": "06:40"},  # Über Mitternacht
         "BD2": {"start": "14:40", "end": "06:40"},  # Über Mitternacht
-        "FD10": {"start": "09:00", "end": "17:30"},  
+        "SD10": {"start": "09:00", "end": "17:30"},  
         "BD1/Tag": {"start": "07:00", "end": "19:00"},
         "BD1/Nacht": {"start": "19:00", "end": "07:00"},  # Über Mitternacht
         "BD2/Tag": {"start": "07:00", "end": "19:00"},
