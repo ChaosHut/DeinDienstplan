@@ -632,6 +632,10 @@ def generate_ics():
     ics_content = c.serialize()  # Serialisieren des Kalenders
     with open(ics_filename, 'w', encoding='utf-8') as my_file:
         my_file.write(ics_content)
+
+    # Log-Aktion
+    firstLine = schedule_text.splitlines()[0]
+    log_action(firstLine, "ICS erstellt")
   
     return send_file(ics_filename, as_attachment=True, download_name=ics_filename)
 
