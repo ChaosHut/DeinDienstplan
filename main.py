@@ -411,8 +411,8 @@ def handle_employee_selection():
     # Überprüfe die Plausibilität
     if not processor.check_plausibility():
         error_message = ("Fehler: Offenbar wurde die Sortierung der Wochenpläne verändert oder "
-                         "Sie haben einen alten Dienstlan geladen. Eine verlässliche Extraktion der Dienste ist "
-                         "nicht gewährleistet. Bitte informieren Sie den Entwickler")
+                         "du hast einen alten Dienstlan geladen. Eine verlässliche Extraktion der Dienste ist "
+                         "nicht gewährleistet. Bitte informiere den Entwickler")
         return jsonify(message="Fehler bei der Plausibilitätsprüfung", schedule=error_message)
 
     #  Hole den Zeitplan für den ausgewählten Mitarbeiter.
