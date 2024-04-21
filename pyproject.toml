@@ -11,6 +11,7 @@ openpyxl = "^3.1.2"
 requests = "^2.31.0"
 flask = "^3.0.0"
 fpdf = "^1.7.2"
+pytz = "^2024.1"
 
 [tool.pyright]
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md

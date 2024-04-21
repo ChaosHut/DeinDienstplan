@@ -14,6 +14,7 @@ import os
 import uuid
 from flask import jsonify
 import locale
+import pytz
 
 app = Flask(__name__)
 app.secret_key = "secret_key"  # Für Flash-Messages
@@ -544,48 +545,49 @@ def generate_ics():
     data = request.json
     schedule_text = data['schedule_text']
     event_type = data.get('event_type', 'fullDay')  # Standardmäßig 'fullDay'
-  
+
     c = Calendar()
 
-  #Alle Schichtzeiten hier in UTC (Tatsächliche Zeitzone durch Kalenderprogramm beim User)
+    timezone = pytz.timezone("Europe/Berlin")
+
     shift_times = {
-        "OP-Koordination": {"start": "06:20", "end": "14:50"},
-        "FD-OP": {"start": "06:20", "end": "14:50"},
-        "FD-lang": {"start": "06:20", "end": "17:05"},
-        "FD-Außenbezirke": {"start": "06:20", "end": "14:50"},
-        "EGR-OA": {"start": "06:20", "end": "14:50"},
-        "FD-EGR": {"start": "06:20", "end": "14:50"},
-        "FD-BronchoHKL": {"start": "06:20", "end": "14:50"},
-        "FD-Geb": {"start": "06:20", "end": "14:50"},
-        "SD930": {"start": "08:30", "end": "17:00"},
-        "SD11": {"start": "09:00", "end": "18:30"},
-        "SD13": {"start": "12:00", "end": "20:30"},
-        "POBE": {"start": "09:00", "end": "17:30"},
-        "Prämed": {"start": "06:20", "end": "14:50"},
-        "OA-ZOP": {"start": "06:20", "end": "14:50"},
-        "FD-Einarbeitung": {"start": "06:20", "end": "14:50"},
-        "FD-OA-Int": {"start": "05:50", "end": "14:20"},
-        "FD-FA-Int": {"start": "05:50", "end": "14:20"},
-        "FD-Int": {"start": "05:50", "end": "14:20"},
-        "SD-Int": {"start": "13:20", "end": "21:50"},
-        "ND-Int": {"start": "20:50", "end": "06:50"},  # Über Mitternacht
-        "NEF-Tag": {"start": "05:50", "end": "18:35"},
-        "NEF-Nacht": {"start": "17:50", "end": "06:35"},  # Über Mitternacht
-        "BD1": {"start": "14:40", "end": "06:40"},  # Über Mitternacht
-        "BD2": {"start": "14:40", "end": "06:40"},  # Über Mitternacht
-        "SD10": {"start": "09:00", "end": "17:30"},  
-        "BD1/Tag": {"start": "07:00", "end": "19:00"},
-        "BD1/Nacht": {"start": "19:00", "end": "07:00"},  # Über Mitternacht
-        "BD2/Tag": {"start": "07:00", "end": "19:00"},
-        "BD2/Nacht": {"start": "19:00", "end": "07:00"}  # Über Mitternacht
-        # 'ITW' und 'Rufdienst' sind nicht enthalten, da sie immer Ganztagestermine sind.
-    }
-    # Wochenendzeiten hinzufügen
-    weekend_shift_times = {
-        "FD-Int": {"start": "05:50", "end": "16:20"},
-        "SD-Int": {"start": "15:20", "end": "21:50"}
+        "OP-Koordination": {"start": "07:20", "end": "15:50"},
+        "FD-OP": {"start": "07:20", "end": "15:50"},
+        "FD-lang": {"start": "07:20", "end": "18:05"},
+        "FD-Außenbezirke": {"start": "07:20", "end": "15:50"},
+        "EGR-OA": {"start": "07:20", "end": "15:50"},
+        "FD-EGR": {"start": "07:20", "end": "15:50"},
+        "FD-BronchoHKL": {"start": "07:20", "end": "15:50"},
+        "FD-Geb": {"start": "07:20", "end": "15:50"},
+        "SD930": {"start": "09:30", "end": "18:00"},
+        "SD11": {"start": "10:00", "end": "19:30"},
+        "SD13": {"start": "13:00", "end": "21:30"},
+        "POBE": {"start": "10:00", "end": "18:30"},
+        "Prämed": {"start": "07:20", "end": "15:50"},
+        "OA-ZOP": {"start": "07:20", "end": "15:50"},
+        "FD-Einarbeitung": {"start": "07:20", "end": "15:50"},
+        "FD-OA-Int": {"start": "06:50", "end": "15:20"},
+        "FD-FA-Int": {"start": "06:50", "end": "15:20"},
+        "FD-Int": {"start": "06:50", "end": "15:20"},
+        "SD-Int": {"start": "14:20", "end": "22:50"},
+        "ND-Int": {"start": "21:50", "end": "07:50"},
+        "NEF-Tag": {"start": "06:50", "end": "19:35"},
+        "NEF-Nacht": {"start": "18:50", "end": "07:35"},
+        "BD1": {"start": "15:40", "end": "07:40"},
+        "BD2": {"start": "15:40", "end": "07:40"},
+        "SD10": {"start": "10:00", "end": "18:30"},
+        "BD1/Tag": {"start": "08:00", "end": "20:00"},
+        "BD1/Nacht": {"start": "20:00", "end": "08:00"},
+        "BD2/Tag": {"start": "08:00", "end": "20:00"},
+        "BD2/Nacht": {"start": "20:00", "end": "08:00"}
     }
   
+    weekend_shift_times = {
+        "FD-Int": {"start": "06:50", "end": "17:20"},
+        "SD-Int": {"start": "16:20", "end": "22:50"}
+    }
+
+
     lines = schedule_text.split('\n')
     for line in lines:
         parts = line.split(": ")
@@ -598,45 +600,47 @@ def generate_ics():
                 formatted_date = f"{year}-{month}-{day}"
                 e = Event()
                 e.name = service
-  
+
                 if event_type == 'shiftTimes' and service in shift_times:
-                    # Wochentag ermitteln
                     day_of_week = datetime.datetime.strptime(formatted_date, "%Y-%m-%d").weekday()
-  
-                    # Überprüfen, ob es sich um einen Wochentag oder ein Wochenende handelt
-                    if day_of_week >= 5 and service in weekend_shift_times:  # 5 für Samstag, 6 für Sonntag
+
+                    if day_of_week >= 5 and service in weekend_shift_times:
                         start_time = weekend_shift_times[service]["start"]
                         end_time = weekend_shift_times[service]["end"]
                     else:
                         start_time = shift_times[service]["start"]
                         end_time = shift_times[service]["end"]
-  
+
                     start_datetime = datetime.datetime.strptime(f"{formatted_date} {start_time}", "%Y-%m-%d %H:%M")
                     end_datetime = datetime.datetime.strptime(f"{formatted_date} {end_time}", "%Y-%m-%d %H:%M")
-  
+
+                    start_datetime = timezone.localize(start_datetime)
+                    end_datetime = timezone.localize(end_datetime)
+
                     if end_datetime <= start_datetime:
                         end_datetime += datetime.timedelta(days=1)
-  
+
                     e.begin = start_datetime
                     e.end = end_datetime
                 else:
-                    e.begin = formatted_date
+                    all_day_date = datetime.datetime.strptime(formatted_date, "%Y-%m-%d")
+                    all_day_date = timezone.localize(all_day_date)
+                    e.begin = all_day_date
                     e.make_all_day()
-  
+
                 c.events.add(e)
-  
+
     employee_name = lines[0].split(' ')[2] if len(lines) > 0 else "Unbekannt"
     month_year = ' '.join(lines[0].split(' ')[-2:]) if len(lines) > 0 else "Unbekannt"
     ics_filename = f"Dienstplan-{employee_name}-{month_year}.ics"
-  
-    ics_content = c.serialize()  # Serialisieren des Kalenders
+
+    ics_content = c.serialize()
     with open(ics_filename, 'w', encoding='utf-8') as my_file:
         my_file.write(ics_content)
 
-    # Log-Aktion
     firstLine = schedule_text.splitlines()[0]
     log_action(firstLine, "ICS erstellt")
-  
+
     return send_file(ics_filename, as_attachment=True, download_name=ics_filename)
 
 
