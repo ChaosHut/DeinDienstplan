@@ -590,45 +590,45 @@ def generate_ics():
 
     lines = schedule_text.split('\n')
     for line in lines:
-        parts = line.split(": ")
-        if len(parts) == 2:
-            date_str, service = parts
-            date_parts = date_str.split(" ")
-            if len(date_parts) == 2:
-                date, weekday = date_parts
-                day, month, year = date.split('.')
-                formatted_date = f"{year}-{month}-{day}"
-                e = Event()
-                e.name = service
+      parts = line.split(": ")
+      if len(parts) == 2:
+          date_str, service = parts
+          date_parts = date_str.split(" ")
+          if len(date_parts) == 2:
+              date, weekday = date_parts
+              day, month, year = date.split('.')
+              formatted_date = f"{year}-{month}-{day}"
+              e = Event()
+              e.name = service
+              if event_type == 'shiftTimes' and service in shift_times:
+                  day_of_week = datetime.datetime.strptime(formatted_date, "%Y-%m-%d").weekday()
 
-                if event_type == 'shiftTimes' and service in shift_times:
-                    day_of_week = datetime.datetime.strptime(formatted_date, "%Y-%m-%d").weekday()
+                  if day_of_week >= 5 and service in weekend_shift_times:
+                      start_time = weekend_shift_times[service]["start"]
+                      end_time = weekend_shift_times[service]["end"]
+                  else:
+                      start_time = shift_times[service]["start"]
+                      end_time = shift_times[service]["end"]
 
-                    if day_of_week >= 5 and service in weekend_shift_times:
-                        start_time = weekend_shift_times[service]["start"]
-                        end_time = weekend_shift_times[service]["end"]
-                    else:
-                        start_time = shift_times[service]["start"]
-                        end_time = shift_times[service]["end"]
+                  start_datetime = datetime.datetime.strptime(f"{formatted_date} {start_time}", "%Y-%m-%d %H:%M")
+                  end_datetime = datetime.datetime.strptime(f"{formatted_date} {end_time}", "%Y-%m-%d %H:%M")
 
-                    start_datetime = datetime.datetime.strptime(f"{formatted_date} {start_time}", "%Y-%m-%d %H:%M")
-                    end_datetime = datetime.datetime.strptime(f"{formatted_date} {end_time}", "%Y-%m-%d %H:%M")
+                  # Apply timezone
+                  start_datetime = timezone.localize(start_datetime)
+                  end_datetime = timezone.localize(end_datetime)
 
-                    start_datetime = timezone.localize(start_datetime)
-                    end_datetime = timezone.localize(end_datetime)
+                  # Adjust for over-midnight shifts
+                  if end_datetime <= start_datetime:
+                      end_datetime += datetime.timedelta(days=1)
 
-                    if end_datetime <= start_datetime:
-                        end_datetime += datetime.timedelta(days=1)
-
-                    e.begin = start_datetime
-                    e.end = end_datetime
-                else:
-                    all_day_date = datetime.datetime.strptime(formatted_date, "%Y-%m-%d")
-                    all_day_date = timezone.localize(all_day_date)
-                    e.begin = all_day_date
-                    e.make_all_day()
-
-                c.events.add(e)
+                  e.begin = start_datetime
+                  e.end = end_datetime
+              else:
+                  # For all-day events, just use the date without timezone conversion
+                  all_day_date = datetime.datetime.strptime(formatted_date, "%Y-%m-%d")
+                  e.begin = all_day_date
+                  e.make_all_day()  # Mark as an all-day event
+              c.events.add(e)
 
     employee_name = lines[0].split(' ')[2] if len(lines) > 0 else "Unbekannt"
     month_year = ' '.join(lines[0].split(' ')[-2:]) if len(lines) > 0 else "Unbekannt"
