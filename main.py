@@ -444,6 +444,7 @@ def generate_pdf():
         "FD-Einarbeitung": {"start": "07:20", "end": "15:50"},
         "FD-OA-Int": {"start": "06:50", "end": "15:20"},
         "FD-FA-Int": {"start": "06:50", "end": "15:20"},
+        "FD-FA-Int, FD-Int": {"start": "06:50", "end": "15:20"},
         "FD-Int": {"start": "06:50", "end": "15:20"},
         "SD-Int": {"start": "14:20", "end": "22:50"},
         "ND-Int": {"start": "21:50", "end": "07:50"},  # Über Mitternacht
@@ -567,6 +568,7 @@ def generate_ics():
         "OA-ZOP": {"start": "07:20", "end": "15:50"},
         "FD-Einarbeitung": {"start": "07:20", "end": "15:50"},
         "FD-OA-Int": {"start": "06:50", "end": "15:20"},
+        "FD-FA-Int, FD-Int": {"start": "06:50", "end": "15:20"},
         "FD-FA-Int": {"start": "06:50", "end": "15:20"},
         "FD-Int": {"start": "06:50", "end": "15:20"},
         "SD-Int": {"start": "14:20", "end": "22:50"},
