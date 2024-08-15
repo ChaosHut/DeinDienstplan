@@ -101,9 +101,9 @@ class ExcelProcessor:
             self.workbook = openpyxl.load_workbook(self.modified_file)
             for sheet_name in self.relevant_sheets:
                 sheet = self.workbook[sheet_name]
-                letter_combinations = [sheet.cell(row=row, column=1).value for row in range(75, 136) if
+                letter_combinations = [sheet.cell(row=row, column=1).value for row in range(76, 138) if
                                        sheet.cell(row=row, column=1).value]
-                for row in sheet.iter_rows(min_row=3, max_row=66, min_col=4, max_col=10):
+                for row in sheet.iter_rows(min_row=3, max_row=73, min_col=4, max_col=10):
                     for cell in row:
                         if cell.value:
                             for value in cell.value.split('/'):
@@ -116,7 +116,7 @@ class ExcelProcessor:
         all_sheets = self.workbook.sheetnames
         for sheet_name in all_sheets:
             sheet = self.workbook[sheet_name]
-            for row in sheet.iter_rows(min_row=3, max_row=66, min_col=4, max_col=10):
+            for row in sheet.iter_rows(min_row=3, max_row=73, min_col=4, max_col=10):
                 for cell in row:
                     if cell.value and isinstance(cell.value, str) and re.match(r'^=.*$', cell.value):
                         # Prüfung auf ungültige Referenz (#REF!)
@@ -148,8 +148,8 @@ class ExcelProcessor:
             'A15': 'Eingriff',
             'A24': 'POB',
             'A30': 'Inten',
-            'A40': 'BD 1',
-            'A41': 'BD 2',
+            'A41': 'BD 1',
+            'A42': 'BD 2',
         }
 
         # Iteriere über die relevanten Tabellenblätter.
@@ -278,14 +278,15 @@ class ExcelProcessor:
             36: 'ND-Int',
             37: 'NEF-Tag',
             38: 'NEF-Nacht',
-            39: 'ITW',
-            40: 'BD1',
-            41: 'BD2',
-            42: 'Rufdienst',
+            39: 'ITW-Tag',
+            40: 'ITW-Nacht',
+            41: 'BD1',
+            42: 'BD2',
+            43: 'Rufdienst',
         }
 
-        # Füge den Dienst 'Frei' für die Zeilen 43 bis 73 hinzu.
-        for row in range(43, 74):
+        # Füge den Dienst 'Frei' für die Zeilen 44 bis 73 hinzu.
+        for row in range(44, 74):
             services[row] = 'Frei'
 
         # Spezielle Logik für Zeile 73
@@ -575,6 +576,8 @@ def generate_ics():
         "ND-Int": {"start": "21:50", "end": "07:50"},
         "NEF-Tag": {"start": "06:50", "end": "19:35"},
         "NEF-Nacht": {"start": "18:50", "end": "07:35"},
+        "ITW-Tag": {"start": "06:50", "end": "19:35"},
+        "ITW-Nacht": {"start": "18:50", "end": "07:35"},
         "BD1": {"start": "15:40", "end": "07:40"},
         "BD2": {"start": "15:40", "end": "07:40"},
         "SD10": {"start": "10:00", "end": "18:30"},
